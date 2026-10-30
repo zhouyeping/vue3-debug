@@ -1,0 +1,19 @@
+{
+  "name": "vue-reactivity-debug",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "component": "node component/server.mjs",
+    "start": "node --enable-source-maps --import tsx --import ./src/env.ts src/main.ts",
+    "debug": "node --enable-source-maps --inspect-brk --import tsx --import ./src/env.ts src/main.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "vue": "3.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "tsx": "^4.19.0",
+    "typescript": "~5.6.2"
+  }
+}

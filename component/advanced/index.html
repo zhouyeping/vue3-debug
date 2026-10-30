@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Vue 3.5.4 综合调试</title>
+  <style>
+    body { max-width: 1000px; margin: 28px auto; padding: 0 16px; font: 15px/1.7 sans-serif; color: #243442; }
+    button, input { font: inherit; } button { margin: 4px; cursor: pointer; }
+    section, article { border: 1px solid #bccbd2; padding: 14px; margin: 12px 0; border-radius: 6px; }
+    li { margin: 8px 0; } li input { width: 180px; margin-left: 12px; }
+    .controls { background: #f0f6fa; } small { color: #526775; }
+    #logs { background: #142431; color: #dcf3e8; padding: 12px; height: 260px; overflow: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Vue 3.5.4 组件综合调试</h1>
+  <p>建议按按钮顺序逐个实验；刷新恢复初始状态。打开控制台查看完整日志。</p>
+  <label><input id="pause-actions" type="checkbox" checked> 操作前暂停</label>
+  <label><input id="pause-hooks" type="checkbox"> 钩子 / watch / render 时暂停（含初次挂载）</label>
+  <button id="clear-log">清空日志</button>
+  <div id="app"></div>
+  <h2>执行日志</h2>
+  <pre id="logs"></pre>
+  <script type="module" src="/advanced/main.js"></script>
+</body>
+</html>

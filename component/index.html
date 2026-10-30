@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vue 3.5.4 组件生命周期调试</title>
+    <style>
+      body { max-width: 720px; margin: 48px auto; font: 16px/1.7 sans-serif; }
+      button { margin-right: 12px; padding: 6px 16px; cursor: pointer; }
+      #app { margin: 24px 0; padding: 16px; border: 1px solid #aaa; }
+    </style>
+  </head>
+  <body>
+    <h1>组件生命周期调试</h1>
+    <p>打开开发者工具后刷新页面。每次遇到 debugger 会暂停，按 F8 继续。</p>
+    <button id="update" disabled>更新 count</button>
+    <button id="unmount" disabled>卸载组件</button>
+    <p id="status">准备挂载</p>
+    <div id="app"></div>
+    <p>卸载后刷新页面，可重新走完整流程。控制台会依次输出生命周期日志。</p>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

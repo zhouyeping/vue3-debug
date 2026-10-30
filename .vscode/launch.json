@@ -1,0 +1,51 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "调试组件综合示例（先运行 npm run component）",
+      "url": "http://127.0.0.1:5174/advanced/",
+      "webRoot": "${workspaceFolder}/component",
+      "sourceMaps": true
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "调试组件生命周期（先运行 npm run component）",
+      "url": "http://127.0.0.1:5174",
+      "webRoot": "${workspaceFolder}/component",
+      "sourceMaps": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "调试数组响应式",
+      "program": "${workspaceFolder}/src/array.ts",
+      "cwd": "${workspaceFolder}",
+      "runtimeArgs": ["--enable-source-maps", "--import", "tsx", "--import", "./src/env.ts"],
+      "sourceMaps": true,
+      "smartStep": false,
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "调试 main.ts（TS 源码）",
+      "program": "${workspaceFolder}/src/main.ts",
+      "cwd": "${workspaceFolder}",
+      "runtimeArgs": [
+        "--enable-source-maps",
+        "--import",
+        "tsx",
+        "--import",
+        "./src/env.ts"
+      ],
+      "sourceMaps": true,
+      "smartStep": false,
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
