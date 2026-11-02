@@ -4,6 +4,7 @@ import {
   createApp, defineComponent, ref, computed, watch, watchEffect,
   nextTick, onMounted, onBeforeMount, onBeforeUpdate, onUpdated,
   onBeforeUnmount, onUnmounted, onRenderTracked, onRenderTriggered,
+  provide, inject, useAttrs,
 } from '/vue-full.js'
 
 let sequence = 0
@@ -34,6 +35,18 @@ function lifecycle(name) {
 }
 
 let instanceId = 0
+const themeKey = Symbol('debug-theme')
+const InjectLeaf = defineComponent({
+  name: 'InjectLeaf',
+  setup() {
+    // 注入的是父组件提供的同一个 ref，模板中会自动解包。
+    const theme = inject(themeKey)
+    const fallback = inject('missing-debug-key', '未提供时的默认值')
+    watch(theme, (value, old) => trace('Leaf inject watch', `${old} → ${value}`))
+    return { theme, fallback }
+  },
+  template: `<p id="injected-theme">孙组件 inject：{{ theme }}；{{ fallback }}</p>`,
+})
 const ItemRow = defineComponent({
   name: 'ItemRow',
   props: { item: { type: Object, required: true } },
@@ -58,6 +71,7 @@ const ItemRow = defineComponent({
 
 const ChildPanel = defineComponent({
   name: 'ChildPanel',
+  inheritAttrs: false,
   props: {
     title: String,
     count: Number,
@@ -66,10 +80,13 @@ const ChildPanel = defineComponent({
     useIndexKey: Boolean,
   },
   emits: ['increment', 'update:modelValue'],
-  components: { ItemRow },
+  components: { ItemRow, InjectLeaf },
   setup(props, { emit, expose }) {
     lifecycle('Child')
     const localClicks = ref(0)
+    const attrs = useAttrs()
+    // attrs 会随父组件更新，但不是可 watch 的响应式对象；在更新钩子读取。
+    onUpdated(() => trace('Child attrs 更新后', `data-note=${attrs['data-note']}; class=${attrs.class}`))
     const doubled = computed(() => {
       trace('Child computed 求值', `count=${props.count}`)
       return props.count * 2
@@ -84,14 +101,19 @@ const ChildPanel = defineComponent({
       localClicks.value++
       emit('increment')
     }
-    expose({ report: () => `子组件本地点击次数=${localClicks.value}` })
+    function inspectComputed() {
+      trace('computed 连续读取两次', `${doubled.value} / ${doubled.value}`)
+    }
+    expose({ report: () => `子组件本地点击次数=${localClicks.value}`, inspectComputed })
     return { localClicks, doubled, increment }
   },
   template: `
-    <article>
+    <article v-bind="$attrs">
       <header><slot name="header" :count="count">header 后备内容</slot></header>
       <h3>{{ title }}</h3>
       <p>props.count={{ count }}；computed={{ doubled }}；子组件本地次数={{ localClicks }}</p>
+      <p>attrs.data-note={{ $attrs['data-note'] }}（显式透传到 article）</p>
+      <InjectLeaf />
       <button @click="increment">子 emit → 父 count++</button>
       <label>组件 v-model：
         <input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)">
@@ -117,6 +139,11 @@ const App = defineComponent({
     const visible = ref(true)
     const childKey = ref(0)
     const child = ref(null)
+    const messageInput = ref(null)
+    const theme = ref('浅色')
+    const attrNote = ref('初始附加属性')
+    provide(themeKey, theme)
+    watch(child, value => trace('父组件模板 ref 变化', value ? '已设置，可调用 report' : 'null：已卸载'), { flush: 'post' })
     const useIndexKey = ref(false)
     const items = ref([
       { id: 'A', label: '苹果' }, { id: 'B', label: '香蕉' },
@@ -162,8 +189,16 @@ const App = defineComponent({
       toggleVisible: () => act('v-show 仅切换显示', () => { visible.value = !visible.value }),
       replaceChild: () => act('同类型组件改变 key → 销毁并重建', () => { childKey.value++ }),
       inspectRef: () => trace('父通过模板 ref 访问 expose', child.value?.report() ?? '子组件尚未挂载'),
+      inspectComputed: () => child.value ? child.value.inspectComputed() : trace('computed', '请先挂载子组件'),
+      changeTheme: () => act('修改 provide 的 ref → 孙组件 inject 更新', () => { theme.value = theme.value === '浅色' ? '深色' : '浅色' }),
+      changeAttrs: () => act('修改未声明为 prop 的 attrs', () => { attrNote.value += '！' }),
+      focusInput: async () => {
+        await nextTick()
+        messageInput.value.focus()
+        trace('DOM ref', `tag=${messageInput.value.tagName}; value=${messageInput.value.value}`)
+      },
     }
-    return { count, title, message, showChild, visible, childKey, child, useIndexKey, items, ...actions }
+    return { count, title, message, showChild, visible, childKey, child, messageInput, theme, attrNote, useIndexKey, items, ...actions }
   },
   template: `
     <section class="controls">
@@ -184,10 +219,17 @@ const App = defineComponent({
       <button @click="toggleVisible">11. v-show 切换</button>
       <button @click="replaceChild">12. 改变子组件 key</button>
       <button @click="inspectRef">13. ref / expose</button>
+      <br>
+      <button @click="inspectComputed">14. 连读 computed / 缓存</button>
+      <button @click="changeTheme">15. provide / inject</button>
+      <button @click="changeAttrs">16. 更新 attrs</button>
+      <button @click="focusInput">17. DOM ref 聚焦</button>
+      <p>父 provide theme={{ theme }}</p>
+      <label>父 DOM ref：<input ref="messageInput" v-model="message" aria-label="父 DOM ref 输入框"></label>
     </section>
     <ChildPanel v-if="showChild" v-show="visible" ref="child" :key="childKey"
       :title="title" :count="count" :items="items" :use-index-key="useIndexKey"
-      v-model="message" @increment="count++">
+      v-model="message" @increment="count++" class="child-attrs" :data-note="attrNote">
       <template #header="{ count: childCount }">
         <strong>具名作用域插槽 header：{{ title }} / 子传回 count={{ childCount }}</strong>
       </template>
@@ -200,4 +242,5 @@ const App = defineComponent({
 })
 
 // 在这里打断点，可以从模板编译、组件实例创建一路跟到 DOM 挂载。
+debugger
 createApp(App).mount('#app')

@@ -24,6 +24,10 @@
 10. **v-if / v-show**：v-if 卸载并重新创建子树，局部状态重置、watch 清理；v-show 只调整 display，保留组件和状态。隐藏时仍可响应更新。
 11. **改变组件 key**：类型相同但 key 不同，会销毁旧子树再创建新子树。父 count/message/items 保留，子局部状态重新初始化。
 12. **ref / expose**：父组件读取子组件显式暴露的方法；v-if 卸载后 ref 为 null。挂载/更新后访问 DOM 或 ref 时注意 nextTick。
+13. **计算属性缓存**：点按钮 14，连续读取两次 `doubled.value`；初次渲染已经求值，因此依赖不变时不会再次出现“Child computed 求值”。点按钮 1 改变 count，子组件下一次渲染读取 computed 时重新求值；再点 14 继续复用缓存。点按钮 3 修改无关标题也不会重新求值。可在 getter 中设置断点，比较依赖失效、重新读取和缓存命中。
+14. **provide / inject**：点按钮 15，父组件修改提供的 `theme` ref，孙组件 `InjectLeaf` 直接读取注入值并更新，途中不需要声明或转发 theme prop。`inject` 返回同一个 ref；模板自动解包，JS 中用 `.value`。另一个未提供的 key 演示默认值。用 v-if 卸载再挂载，孙组件会重新注入父组件当前的值。
+15. **attrs**：点按钮 16，观察子组件的 `$attrs['data-note']`、更新钩子日志和浏览器 Elements 中 article 的 `data-note`。`title/count` 是已声明 props，`increment` 是已声明事件，不属于 attrs；未声明的 `class/data-note` 属于 attrs。Child 使用 `inheritAttrs: false` 并在 article 上显式 `v-bind="$attrs"`。`useAttrs()` 返回的对象保持最新，但不是可通过 watch 订阅的响应式对象。
+16. **DOM ref 与组件 ref**：按钮 17 在 nextTick 后通过 `messageInput.value` 聚焦父输入框并记录 DOM 信息；按钮 13 通过 `child.value` 调用 expose 方法。观察父组件模板 ref 日志：初次挂载后设置、v-if 卸载后为 null、重新挂载或改变 key 后指向新实例；v-show 隐藏仍保留引用。ref 是渲染器赋值的引用，不是 HTML 的 ref 属性。
 
 ## 源码断点
 
@@ -40,6 +44,10 @@
 | 列表 diff | patchKeyedChildren / getSequence / move | packages/runtime-core/src/renderer.ts |
 | 调度 | queueJob / flushJobs | packages/runtime-core/src/scheduler.ts |
 | watch | doWatch / watch | packages/runtime-core/src/apiWatch.ts、packages/reactivity/src/watch.ts |
+| computed | ComputedRefImpl.value getter / refreshComputed | packages/reactivity/src/computed.ts、effect.ts |
+| provide / inject | provide / inject | packages/runtime-core/src/apiInject.ts |
+| attrs | initProps / updateProps / setupContext.attrs / renderComponentRoot | packages/runtime-core/src/componentProps.ts、component.ts、componentRenderUtils.ts |
+| 模板 ref / expose | setRef / getComponentPublicInstance / expose | packages/runtime-core/src/rendererTemplateRef.ts、component.ts |
 | 事件 | emit | packages/runtime-core/src/componentEmits.ts |
 | v-show | vShow | packages/runtime-dom/src/directives/vShow.ts |
 | 卸载 | unmountComponent | packages/runtime-core/src/renderer.ts |
@@ -47,3 +55,5 @@
 模板可能被编译器标记为稳定插槽，更新插槽不一定经过所有通用分支。观察实际调用栈，而不是假定每个分支每次都会执行。
 
 此例聚焦常见组件流程；不包含 Router、KeepAlive、Teleport、Suspense、Transition、异步组件等后续场景。
+
+已补充：计算属性、provide/inject、attrs、DOM refs 与组件 ref/expose（按钮 13–17）。

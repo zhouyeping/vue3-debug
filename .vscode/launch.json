@@ -32,6 +32,18 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "调试响应式",
+      "program": "${workspaceFolder}/src/reactive.ts",
+      "cwd": "${workspaceFolder}",
+      "runtimeArgs": ["--enable-source-maps", "--import", "tsx", "--import", "./src/env.ts"],
+      "sourceMaps": true,
+      "smartStep": false,
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },    
+    {
+      "type": "node",
+      "request": "launch",
       "name": "调试 main.ts（TS 源码）",
       "program": "${workspaceFolder}/src/main.ts",
       "cwd": "${workspaceFolder}",
